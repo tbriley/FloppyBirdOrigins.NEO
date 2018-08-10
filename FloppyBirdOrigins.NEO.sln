@@ -1,0 +1,17 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FloppyBirdOrigins.NEO", "FloppyBirdOrigins.NEO\FloppyBirdOrigins.NEO.csproj", "{EC5C814A-999B-426F-B5D7-BB9D0A5CEEE4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EC5C814A-999B-426F-B5D7-BB9D0A5CEEE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC5C814A-999B-426F-B5D7-BB9D0A5CEEE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC5C814A-999B-426F-B5D7-BB9D0A5CEEE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC5C814A-999B-426F-B5D7-BB9D0A5CEEE4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
