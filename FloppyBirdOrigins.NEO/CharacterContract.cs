@@ -44,7 +44,7 @@ namespace FloppyBirdOrigins.NEO
                     return Delete((string)args[1]);
 
                 case "getCharactersForOwner":
-                    return GetCharactersForOwner((byte[])args[0]);
+                    return GetCharacterIDsForOwner((byte[])args[0]);
 
                 default:
                     return false;
@@ -60,7 +60,7 @@ namespace FloppyBirdOrigins.NEO
 
             characterCount += 1;
 
-            Storage.Put(Storage.CurrentContext, characterCount.ToString() + idKey, id);
+            Storage.Put(Storage.CurrentContext, characterCount.AsByteArray().AsString() + idKey, id);
             Storage.Put(Storage.CurrentContext, id + ownerKey, owner);
             Storage.Put(Storage.CurrentContext, id + dataKey, data);
 
@@ -96,7 +96,7 @@ namespace FloppyBirdOrigins.NEO
 
             if (!Runtime.CheckWitness(owner)) { return false; }
 
-            Storage.Delete(Storage.CurrentContext, characterCount.ToString() + idKey);
+            Storage.Delete(Storage.CurrentContext, characterCount.AsByteArray().AsString() + idKey);
             Storage.Delete(Storage.CurrentContext, id + ownerKey);
             Storage.Delete(Storage.CurrentContext, id + dataKey);
 
@@ -105,18 +105,19 @@ namespace FloppyBirdOrigins.NEO
             return true;
         }
 
-        private static object GetCharactersForOwner(byte[] targetOwner)
+        private static object GetCharacterIDsForOwner(byte[] targetOwner)
         {
-            var datas = new List<byte[]>();
+            var datas = new string[100];
             for (var i = 0; i < characterCount; i++)
             {
-                var id = Storage.Get(Storage.CurrentContext, i + idKey);
+                var bigI = (BigInteger)i;
+                var id = Storage.Get(Storage.CurrentContext, bigI.AsByteArray().AsString() + idKey).AsString();
                 var data = Storage.Get(Storage.CurrentContext, id + dataKey);
                 var owner = Storage.Get(Storage.CurrentContext, id + ownerKey);
 
                 if(owner == targetOwner)
                 {
-                    datas.Add(data);
+                    datas[(int)i] = id;
                 }
             }
             return datas;
