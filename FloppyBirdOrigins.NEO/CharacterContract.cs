@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Neo.SmartContract.Framework;
 using Neo.SmartContract.Framework.Services.Neo;
@@ -7,20 +8,118 @@ namespace FloppyBirdOrigins.NEO
 {
     public class CharacterContract : SmartContract
     {
-        public static byte[] Main(string operation, object[] args)
+        private static BigInteger characterCount
         {
-            var characterID = (string)args[0];
-            if (operation.Equals("get"))
+            get
             {
-                byte[] data = Storage.Get(Storage.CurrentContext, characterID);
-                Runtime.Notify("CHARACTER_" + characterID, data.AsString());
-                return data;
+                return Storage.Get(Storage.CurrentContext, nameof(characterCount)).AsBigInteger();
             }
-            else if(operation.Equals("transfer"))
+            set
             {
-                return new BigInteger(0).AsByteArray();
+                Storage.Put(Storage.CurrentContext, nameof(characterCount), value);
             }
-            return new BigInteger(0).AsByteArray();
+        }
+
+        private const string ownerKey = "Owner";
+        private const string idKey = "ID";
+        private const string dataKey = "Data";
+
+        // 0 == sender
+        // 1 == id
+        // 2 == data
+        public static object Main(string operation, params object[] args)
+        {
+            switch (operation)
+            {
+                case "createCharacter":
+                    return CreateCharacter((byte[])args[0], (string)args[1], (string)args[2]);
+
+                case "getCharacter":
+                    return GetCharacter((string)args[1]);
+
+                case "transferCharacter":
+                    return TransferCharacter((string)args[1], (byte[])args[0]);
+
+                case "delete":
+                    return Delete((string)args[1]);
+
+                case "getCharactersForOwner":
+                    return GetCharactersForOwner((byte[])args[0]);
+
+                default:
+                    return false;
+            }
+        }
+
+        private static bool CreateCharacter(byte[] owner, string id, string data)
+        {
+            if (!Runtime.CheckWitness(owner)) { return false; }
+
+            byte[] value = Storage.Get(Storage.CurrentContext, id);
+            if (value != null) { return false; }
+
+            characterCount += 1;
+
+            Storage.Put(Storage.CurrentContext, characterCount.ToString() + idKey, id);
+            Storage.Put(Storage.CurrentContext, id + ownerKey, owner);
+            Storage.Put(Storage.CurrentContext, id + dataKey, data);
+
+            Runtime.Notify("CREATED_CHARACTER_" + id, data);
+            return true;
+        }
+
+        private static byte[] GetCharacter(string id)
+        {
+            return Storage.Get(Storage.CurrentContext, id + dataKey);
+        }
+
+        private static bool TransferCharacter(string id, byte[] targetOwner)
+        {
+            if (!Runtime.CheckWitness(targetOwner)) { return false; }
+
+            byte[] currentOwner = Storage.Get(Storage.CurrentContext, id + ownerKey);
+            if (currentOwner == null) { return false; }
+
+            if (!Runtime.CheckWitness(currentOwner)) { return false; }
+
+            Storage.Put(Storage.CurrentContext, id + ownerKey, targetOwner);
+
+            Runtime.Notify("TRANSFERRED_CHARACTER_" + id);
+
+            return true;
+        }
+
+        private static bool Delete(string id)
+        {
+            byte[] owner = Storage.Get(Storage.CurrentContext, id + ownerKey);
+            if (owner == null) { return false; }
+
+            if (!Runtime.CheckWitness(owner)) { return false; }
+
+            Storage.Delete(Storage.CurrentContext, characterCount.ToString() + idKey);
+            Storage.Delete(Storage.CurrentContext, id + ownerKey);
+            Storage.Delete(Storage.CurrentContext, id + dataKey);
+
+            characterCount -= 1;
+
+            return true;
+        }
+
+        private static object GetCharactersForOwner(byte[] targetOwner)
+        {
+            var datas = new List<byte[]>();
+            for (var i = 0; i < characterCount; i++)
+            {
+                var id = Storage.Get(Storage.CurrentContext, i + idKey);
+                var data = Storage.Get(Storage.CurrentContext, id + dataKey);
+                var owner = Storage.Get(Storage.CurrentContext, id + ownerKey);
+
+                if(owner == targetOwner)
+                {
+                    datas.Add(data);
+                }
+            }
+            return datas;
         }
     }
 }
